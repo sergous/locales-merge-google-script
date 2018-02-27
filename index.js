@@ -95,7 +95,7 @@ function onOpen() {
     // Get translate id 
     var translateId = findTranslateId(updatesTable, TABLE_RANGE, rowIdx);
     if (!translateId) {
-      setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1);
+      setTableCellBg(updatesTable, rowIdx, 1);
       return;
     }
     
@@ -121,7 +121,7 @@ function onOpen() {
     // Found base table row with translateId
     var baseRow = getRowByTranslateId(baseTable, TABLE_RANGE, translateId);
     if (!baseRow) {
-      setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1);
+      setTableCellBg(updatesTable, rowIdx, 1);
       Logger.log('ВНИМАНИЕ! Ключ ' + translateId + ' не найден: ряд ' + rowIdx + ' колонка ' + 1);
       return;
     } else {
@@ -133,28 +133,26 @@ function onOpen() {
       Logger.log(BASE_TABLE_NAME + ' - ' + baseRowIdx + ': ' + translateId + ' ' + foundBaseTranslations);
       
       if (!isSameValue(foundBaseTranslations, foundUpdatesTranslations)) {
-        setTableCellBg(UPDATES_TABLE_NAME, rowIdx, updatesRuIdx + 1);
+        setTableCellBg(updatesTable, rowIdx, updatesRuIdx + 1);
         Logger.log('ВНИМАНИЕ! Значение ключа ' + translateId + ' в обновлениях "' + foundUpdatesTranslations[0] + '" и в базовой таблице "' + foundBaseTranslations[0] + '" не совпадает: ряд ' + rowIdx + ' колонка ' + (updatesRuIdx + 1) );
         return;
       }
       
-      setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1, 'white', ROW_LENGTH);
+      setTableCellBg(updatesTable, rowIdx, 1, 'white', ROW_LENGTH);
       
       replaceTableRow(baseTable, baseRowIdx + 1, baseRuIdx + 1, foundUpdatesTranslations);
       return baseRowIdx;
     } 
   }
   
-  function setTableCellBg(tableName, rowIdx, colIdx, color, length) {
+  function setTableCellBg(table, rowIdx, colIdx, color, length) {
     var context = 'setTableCellBg: '; 
-    if (!tableName) throw new Error(context + 'tableName is not set');
+    if (!table) throw new Error(context + 'table is not set');
     if (!rowIdx) throw new Error(context + 'rowIdx is not set');
     if (!colIdx) throw new Error(context + 'colIdx is not set');
     if (!color) color = "red";
     if (!length) length = 1;
     
-    var spreadsheet = SpreadsheetApp.getActive();
-    var table = spreadsheet.getSheetByName(tableName);
     var range = table.getRange(rowIdx, colIdx, 1, length);
     range.setBackground(color);
   }
