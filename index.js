@@ -11,7 +11,7 @@ function onOpen() {
   
   var TRANSLATE_ID_NAME = '_concat_id';
   var HEAD_RANGE = 'A1:P2';
-  var TABLE_RANGE = 'A1:J1958';
+  var TABLE_RANGE = 'A1:J3000';
   var BASE_TABLE_NAME = 'Интерфейс 1.0';
   // var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
   var UPDATES_TABLE_NAME = 'Вычитка английского';
@@ -208,7 +208,12 @@ function onOpen() {
     if (!colId) throw new Error(context + 'colId is not set');
     if (!resultsRow) throw new Error(context + 'colId is not set');
     
-    table.getRange(rowIdx, colId, 1, resultsRow.length).setValues([resultsRow]);
+    resultsRow.forEach(function (item, idx) {
+      if (!item || !item.length) return;
+      
+      table.getRange(rowIdx, colId + idx, 1, 1).setValues([[item]]);
+    })
+    
   }
   
   function resultsTable(resultsRows) {
@@ -272,6 +277,7 @@ function onOpen() {
     
     var foundRow;
     var foundIdx;
+    
     tableValues.forEach(function (rowValues, idx) {
       if (rowValues[translateIdx].trim() === translateId.trim()) {
         foundRow = rowValues;
@@ -288,7 +294,7 @@ function onOpen() {
     return {
       index: foundIdx,
       data: foundRow,
-      translations: trimArray(foundRow.slice(updatesRuIdx))
+      translations: foundRow.slice(updatesRuIdx)
     }
   }
   
