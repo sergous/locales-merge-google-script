@@ -16,6 +16,8 @@ function onOpen() {
   // var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
   var UPDATES_TABLE_NAME = 'Вычитка английского';
   var ROW_LENGTH = 15;
+  var COLOR_SUCCESS = "lightgreen";
+  var COLOR_ALERT = "red";
   
   /** 
    * Запускает заполнение пустых значений в основной таблице из текущей таблицы с обновлениями
@@ -151,7 +153,7 @@ function onOpen() {
         return;
       }
       
-      setTableCellBg(updatesTable, rowIdx, 1, 'white', ROW_LENGTH);
+      setTableCellBg(updatesTable, rowIdx, 1, COLOR_SUCCESS, ROW_LENGTH);
       
       replaceTableRow(baseTable, baseRowIdx + 1, baseRuIdx + 1, foundUpdatesTranslations);
       return baseRowIdx;
@@ -163,7 +165,7 @@ function onOpen() {
     if (!table) throw new Error(context + 'table is not set');
     if (!rowIdx) throw new Error(context + 'rowIdx is not set');
     if (!colIdx) throw new Error(context + 'colIdx is not set');
-    if (!color) color = "red";
+    if (!color) color = COLOR_ALERT;
     if (!length) length = 1;
     
     var range = table.getRange(rowIdx, colIdx, 1, length);
