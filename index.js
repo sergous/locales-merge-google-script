@@ -14,6 +14,7 @@ function onOpen() {
   var TABLE_RANGE = 'A1:J1958';
   var BASE_TABLE_NAME = 'Интерфейс 1.0';
   var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
+  var ROW_LENGTH = 15;
   
   /** 
    * Запускает заполнение пустых значений в основной таблице из текущей таблицы с обновлениями
@@ -45,8 +46,10 @@ function onOpen() {
     var startRowIdx = 2;
     // var startRowIdx = askData('Укажите начальную строку перевода', 'Укажите номер первой строки в таблице новых переводов ' + UPDATES_TABLE_NAME + ' (например, "2"):');
     
-    var endRowIdx = 10;
+    var endRowIdx = 5;
     // var endRowIdx = askData('Укажите конечную строку перевода', 'Укажите номер последней строки в таблице новых переводов ' + UPDATES_TABLE_NAME + ' (например, "100"):');
+    
+    Logger.log('Базовая таблица "' + BASE_TABLE_NAME + '". Таблица с обновлениями "' + updateTableName + '". Первая строка: ' + startRowIdx + '. Последняя строка: ' + endRowIdx);  
     
     var statFoundLinesIdx = [];
     var statNotFoundLineIds = [];
@@ -62,7 +65,7 @@ function onOpen() {
     updatesTable.activate();
     
     for(var idx = startRowIdx; idx <= endRowIdx; idx++) {
-      var replacedIdx = replaceRow(baseTable, updatesTable, idx, baseRuIdx);
+      var replacedIdx = replaceRow(baseTable, updatesTable, idx, baseRuIdx, updateTableName);
       
       if (!replacedIdx) {
         statNotFoundLineIds.push(idx);
@@ -81,12 +84,13 @@ function onOpen() {
     Browser.msgBox(title, results, Browser.Buttons.OK);
   }
   
-  function replaceRow(baseTable, updatesTable, rowIdx, baseRuIdx) {
+  function replaceRow(baseTable, updatesTable, rowIdx, baseRuIdx, updateTableName) {
     var context = 'replaceRow: '; 
     if (!baseTable) throw new Error(context + 'baseTable is not set');
     if (!updatesTable) throw new Error(context + 'updatesTable is not set');
     if (!rowIdx) throw new Error(context + 'rowIdx is not set');
     if (!baseRuIdx) throw new Error(context + 'baseRuIdx is not set');
+    if (!updateTableName) throw new Error(context + 'updateTableName is not set');
     
     // Get translate id 
     var translateId = findTranslateId(updatesTable, TABLE_RANGE, rowIdx);
@@ -94,8 +98,6 @@ function onOpen() {
       setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1);
       return;
     }
-    
-    Logger.log('translateId ' + translateId);
     
     // var updateColName = 'de';
     // var updateColName = askData('Укажите язык', 'Укажите язык' + ' (например, "de"):');
@@ -111,7 +113,7 @@ function onOpen() {
     if (!updatesRow) throw new Error(context + 'updatesRow is not found'); 
     
     var foundUpdatesTranslations = updatesRow.translations;
-    Logger.log('foundUpdatesTranslations ' + foundUpdatesTranslations);
+    Logger.log(updateTableName + ' - ' + rowIdx + ': ' + translateId + ' ' + foundUpdatesTranslations);
     
     // var updatedValue = foundUpdatesRow[updatesColIdx];
     // Logger.log('updateColName ' + updateColName + ' updatedValue ' + updatedValue);
@@ -120,6 +122,7 @@ function onOpen() {
     var baseRow = getRowByTranslateId(baseTable, TABLE_RANGE, translateId);
     if (!baseRow) {
       setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1);
+      Logger.log('ВНИМАНИЕ! Ключ ' + translateId + ' не найден: ряд ' + rowIdx + ' колонка ' + 1);
       return;
     } else {
       var baseRowIdx = baseRow.index;
@@ -127,30 +130,33 @@ function onOpen() {
       
       var updatesRuIdx = findColIndexByColName(updatesTable, 'ru');
       
-      Logger.log('foundBaseTranslations ' + foundBaseTranslations);
+      Logger.log(BASE_TABLE_NAME + ' - ' + baseRowIdx + ': ' + translateId + ' ' + foundBaseTranslations);
       
       if (!isSameValue(foundBaseTranslations, foundUpdatesTranslations)) {
         setTableCellBg(UPDATES_TABLE_NAME, rowIdx, updatesRuIdx + 1);
+        Logger.log('ВНИМАНИЕ! Значение ключа ' + translateId + ' в обновлениях "' + foundUpdatesTranslations[0] + '" и в базовой таблице "' + foundBaseTranslations[0] + '" не совпадает: ряд ' + rowIdx + ' колонка ' + (updatesRuIdx + 1) );
         return;
       }
+      
+      setTableCellBg(UPDATES_TABLE_NAME, rowIdx, 1, 'white', ROW_LENGTH);
       
       replaceTableRow(baseTable, baseRowIdx + 1, baseRuIdx + 1, foundUpdatesTranslations);
       return baseRowIdx;
     } 
   }
   
-  function setTableCellBg(tableName, rowIdx, colIdx, color) {
+  function setTableCellBg(tableName, rowIdx, colIdx, color, length) {
     var context = 'setTableCellBg: '; 
     if (!tableName) throw new Error(context + 'tableName is not set');
     if (!rowIdx) throw new Error(context + 'rowIdx is not set');
     if (!colIdx) throw new Error(context + 'colIdx is not set');
     if (!color) color = "red";
+    if (!length) length = 1;
     
     var spreadsheet = SpreadsheetApp.getActive();
     var table = spreadsheet.getSheetByName(tableName);
-    var range = table.getRange(rowIdx, colIdx, 1, 1);
+    var range = table.getRange(rowIdx, colIdx, 1, length);
     range.setBackground(color);
-    Logger.log('WARNING! Marked as error: row ' + rowIdx + ' column ' + colIdx);
   }
   
   function isSameValue(firstArray, secondArray, index) {
@@ -249,7 +255,7 @@ function onOpen() {
     var tableValues = tableRange.getValues();
   
     var translateIdx = findColIndexByColName(table, TRANSLATE_ID_NAME);
-    Logger.log('translateIdx ' + translateIdx);
+    // Logger.log('translateIdx ' + translateIdx);
     
     var foundRow;
     var foundIdx;
@@ -257,8 +263,8 @@ function onOpen() {
       if (rowValues[translateIdx].trim() === translateId.trim()) {
         foundRow = rowValues;
         foundIdx = idx;
-        Logger.log('foundRow ' + foundRow);
-        Logger.log('foundIdx ' + foundIdx);
+        // Logger.log('foundRow ' + foundRow);
+        // Logger.log('foundIdx ' + foundIdx);
       }
     });
     
