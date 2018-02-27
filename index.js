@@ -13,7 +13,8 @@ function onOpen() {
   var HEAD_RANGE = 'A1:P2';
   var TABLE_RANGE = 'A1:J1958';
   var BASE_TABLE_NAME = 'Интерфейс 1.0';
-  var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
+  // var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
+  var UPDATES_TABLE_NAME = 'Вычитка английского';
   var ROW_LENGTH = 15;
   
   /** 
@@ -27,10 +28,14 @@ function onOpen() {
     // UPDATES TABLE
     
     // Ask table name with updates  
-    var updateTableName = UPDATES_TABLE_NAME;
-    // var updateTableName = askData('Укажите таблицу переводов', 'Укажите название таблицы с новыми переводами' + ' (например, "' + UPDATES_TABLE_NAME + '"):');
+    // var updateTableName = UPDATES_TABLE_NAME;
+    var updateTableName = askData('Укажите таблицу переводов', 'Укажите название таблицы с новыми переводами' + ' (например, "' + UPDATES_TABLE_NAME + '"):');
+    if (!updateTableName || updateTableName === 'cancel') {
+      return;
+    }
     
     var updatesTable = spreadsheet.getSheetByName(updateTableName);
+    if (!updatesTable) throw new Error('addTranslations: updatesTable ' + updateTableName + ' not found');
     
     // var updatesDataRange = TABLE_RANGE;
     // var updatesDataRange = askData('Укажите диапазон', 'Укажите диапазон данных в таблице новых переводов' + ' (например, "A1:J1958"):');
@@ -39,15 +44,23 @@ function onOpen() {
   
     // BASE TABLE
     var baseTable = spreadsheet.getSheetByName(BASE_TABLE_NAME);
+    if (!baseTable) throw new Error('addTranslations: baseTable ' + BASE_TABLE_NAME + ' not found');
+  
     baseTable.activate();
     
     // translateIdResults(baseTable, translateId);
     
-    var startRowIdx = 2;
-    // var startRowIdx = askData('Укажите начальную строку перевода', 'Укажите номер первой строки в таблице новых переводов ' + UPDATES_TABLE_NAME + ' (например, "2"):');
+    // var startRowIdx = 2;
+    var startRowIdx = askData('Укажите начальную строку перевода', 'Укажите номер первой строки в таблице новых переводов ' + updateTableName + ' (например, "2"):');
+    if (!startRowIdx || startRowIdx === 'cancel') {
+      return;
+    }
     
-    var endRowIdx = 5;
-    // var endRowIdx = askData('Укажите конечную строку перевода', 'Укажите номер последней строки в таблице новых переводов ' + UPDATES_TABLE_NAME + ' (например, "100"):');
+    // var endRowIdx = 3;
+    var endRowIdx = askData('Укажите конечную строку перевода', 'Укажите номер последней строки в таблице новых переводов ' + updateTableName + ' (например, "100"):');
+    if (!endRowIdx || endRowIdx === 'cancel') {
+      return;
+    }
     
     Logger.log('Базовая таблица "' + BASE_TABLE_NAME + '". Таблица с обновлениями "' + updateTableName + '". Первая строка: ' + startRowIdx + '. Последняя строка: ' + endRowIdx);  
     
@@ -77,7 +90,7 @@ function onOpen() {
     
     var results = 'Обновлены строки (' + statFoundLinesIdx.length + '): ' + statFoundLinesIdx.join(',') + ' | ' +
       'Не найдены ключи (' + statNotFoundLineIds.length + '): ' + statNotFoundLineIds.join(',');
-    var title = 'Результы обновления переводов';
+    var title = 'Результы обновления переводов в "' + BASE_TABLE_NAME + '"';
     
     Logger.log(title + ': ' + results);
     
@@ -163,7 +176,7 @@ function onOpen() {
     if (!secondArray) throw new Error(context + 'secondArray is not set');
     if (!index) index = 0;
     
-    return firstArray[index] === secondArray[index];
+    return firstArray[index].trim() === secondArray[index].trim();
   }
   
   
@@ -273,8 +286,15 @@ function onOpen() {
     return {
       index: foundIdx,
       data: foundRow,
-      translations: foundRow.slice(updatesRuIdx)
+      translations: trimArray(foundRow.slice(updatesRuIdx))
     }
+  }
+  
+  function trimArray(a) {
+    if (!a) throw new Error('trimArray: array is not set');
+    return a.filter(function(item) {
+      return item && item.length > 0;
+    })
   }
   
   function findColIndexByColName(table, colName) {
