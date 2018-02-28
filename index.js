@@ -59,17 +59,19 @@ function onOpen() {
     
     // translateIdResults(baseTable, translateId);
     
+    var data1 = askData('Укажите начальную строку перевода', 'Укажите номер первой строки в таблице новых переводов ' + updateTableName + ' (например, "2"):');
+    if (!data1 || data1 === 'cancel') {
+      return;
+    }
+    var startRowIdx = parseInt(data1, 10);
     // var startRowIdx = 2;
-    var startRowIdx = askData('Укажите начальную строку перевода', 'Укажите номер первой строки в таблице новых переводов ' + updateTableName + ' (например, "2"):');
-    if (!startRowIdx || startRowIdx === 'cancel') {
-      return;
-    }
     
-    // var endRowIdx = 3;
-    var endRowIdx = askData('Укажите конечную строку перевода', 'Укажите номер последней строки в таблице новых переводов ' + updateTableName + ' (например, "100"):');
-    if (!endRowIdx || endRowIdx === 'cancel') {
+    var data2 = askData('Укажите конечную строку перевода', 'Укажите номер последней строки в таблице новых переводов ' + updateTableName + ' (например, "100"):');
+    if (!data2 || data2 === 'cancel') {
       return;
     }
+    var endRowIdx = parseInt(data2, 10);
+    // var endRowIdx = 3;
     
     Logger.log('Базовая таблица "' + BASE_TABLE_NAME + '". Таблица с обновлениями "' + updateTableName + '". Первая строка: ' + startRowIdx + '. Последняя строка: ' + endRowIdx);  
     
@@ -156,10 +158,13 @@ function onOpen() {
       
       Logger.log(BASE_TABLE_NAME + ' - ' + baseRowIdx + ': ' + translateId + ' ' + foundBaseTranslations);
       
-      if (!isSameValue(foundBaseTranslations, foundUpdatesTranslations)) {
+      var updatesRu = foundUpdatesTranslations[0].toString().trim();
+      var baseRu = foundBaseTranslations[0].toString().trim();
+      
+      if (!updatesRu || !updatesRu.length || baseRu !== updatesRu) {
         setTableCellBg(updatesTable, rowIdx, 1, COLOR_BLANK, ROW_LENGTH);
         setTableCellBg(updatesTable, rowIdx, updatesRuIdx + 1);
-        Logger.log('ВНИМАНИЕ! Значение ключа ' + translateId + ' в обновлениях "' + foundUpdatesTranslations[0] + '" и в базовой таблице "' + foundBaseTranslations[0] + '" не совпадает: ряд ' + rowIdx + ' колонка ' + (updatesRuIdx + 1) );
+        Logger.log('ВНИМАНИЕ! Значение ключа ' + translateId + ' в обновлениях "' + updatesRu + '" и в базовой таблице "' + baseRu + '" не совпадает: ряд ' + rowIdx + ' колонка ' + (updatesRuIdx + 1) );
         return;
       }
       
@@ -188,7 +193,7 @@ function onOpen() {
     if (!secondArray) throw new Error(context + 'secondArray is not set');
     if (!index) index = 0;
     
-    return firstArray[index].trim() === secondArray[index].trim();
+    return firstArray[index].toString().trim() === secondArray[index].toString().trim();
   }
   
   
@@ -270,7 +275,7 @@ function onOpen() {
     var foundId = rowValues[rowIdx - 1][findColIndexByColName(table, TRANSLATE_ID_NAME)];
     // var en = rowValues[rowIdx - 1][findColIndexByColName(table, 'en')];
     // var de = rowValues[rowIdx - 1][findColIndexByColName(table, 'de')];
-    return foundId;
+    return foundId.toString();
   }
   
   function getRowByTranslateId(table, dataRange, translateId) {
@@ -289,7 +294,7 @@ function onOpen() {
     var foundIdx;
     
     tableValues.forEach(function (rowValues, idx) {
-      if (rowValues[translateIdx].trim() === translateId.trim()) {
+      if (rowValues[translateIdx].toString().trim() === translateId.trim()) {
         foundRow = rowValues;
         foundIdx = idx;
         // Logger.log('foundRow ' + foundRow);
