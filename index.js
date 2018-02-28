@@ -10,14 +10,21 @@ function onOpen() {
   }
   
   var TRANSLATE_ID_NAME = '_concat_id';
+  
   var HEAD_RANGE = 'A1:P2';
-  var TABLE_RANGE = 'A1:J3000';
+  var TABLE_RANGE = 'A1:P3000';
+  
   var BASE_TABLE_NAME = 'Интерфейс 1.0';
+  // var BASE_TABLE_NAME = 'Интерфейс (тестовый)';
+  
   // var UPDATES_TABLE_NAME = 'Первая итерация до 1900 строки';
   var UPDATES_TABLE_NAME = 'Вычитка английского';
+  
   var ROW_LENGTH = 15;
   var COLOR_SUCCESS = "lightgreen";
   var COLOR_ALERT = "red";
+  var COLOR_BLANK = "white";
+  
   
   /** 
    * Запускает заполнение пустых значений в основной таблице из текущей таблицы с обновлениями
@@ -48,7 +55,7 @@ function onOpen() {
     var baseTable = spreadsheet.getSheetByName(BASE_TABLE_NAME);
     if (!baseTable) throw new Error('addTranslations: baseTable ' + BASE_TABLE_NAME + ' not found');
   
-    baseTable.activate();
+    // baseTable.activate();
     
     // translateIdResults(baseTable, translateId);
     
@@ -90,9 +97,9 @@ function onOpen() {
       statFoundLinesIdx.push(replacedIdx + 1); 
     }
     
-    var results = 'Обновлены строки (' + statFoundLinesIdx.length + '): ' + statFoundLinesIdx.join(',') + ' | ' +
-      'Не найдены ключи (' + statNotFoundLineIds.length + '): ' + statNotFoundLineIds.join(',');
-    var title = 'Результы обновления переводов в "' + BASE_TABLE_NAME + '"';
+    var results = 'Таблица "' + BASE_TABLE_NAME + '": обновлены строки (' + statFoundLinesIdx.length + '): ' + statFoundLinesIdx.join(',') + ' | ' +
+      'Таблица "' + updateTableName + '": не найдены ключи (' + statNotFoundLineIds.length + ') в строках: ' + statNotFoundLineIds.join(',');
+    var title = 'Результы обновления переводов';
     
     Logger.log(title + ': ' + results);
     
@@ -110,6 +117,7 @@ function onOpen() {
     // Get translate id 
     var translateId = findTranslateId(updatesTable, TABLE_RANGE, rowIdx);
     if (!translateId) {
+      setTableCellBg(updatesTable, rowIdx, 1, COLOR_BLANK, ROW_LENGTH);
       setTableCellBg(updatesTable, rowIdx, 1);
       return;
     }
@@ -136,6 +144,7 @@ function onOpen() {
     // Found base table row with translateId
     var baseRow = getRowByTranslateId(baseTable, TABLE_RANGE, translateId);
     if (!baseRow) {
+      setTableCellBg(updatesTable, rowIdx, 1, COLOR_BLANK, ROW_LENGTH);
       setTableCellBg(updatesTable, rowIdx, 1);
       Logger.log('ВНИМАНИЕ! Ключ ' + translateId + ' не найден: ряд ' + rowIdx + ' колонка ' + 1);
       return;
@@ -148,6 +157,7 @@ function onOpen() {
       Logger.log(BASE_TABLE_NAME + ' - ' + baseRowIdx + ': ' + translateId + ' ' + foundBaseTranslations);
       
       if (!isSameValue(foundBaseTranslations, foundUpdatesTranslations)) {
+        setTableCellBg(updatesTable, rowIdx, 1, COLOR_BLANK, ROW_LENGTH);
         setTableCellBg(updatesTable, rowIdx, updatesRuIdx + 1);
         Logger.log('ВНИМАНИЕ! Значение ключа ' + translateId + ' в обновлениях "' + foundUpdatesTranslations[0] + '" и в базовой таблице "' + foundBaseTranslations[0] + '" не совпадает: ряд ' + rowIdx + ' колонка ' + (updatesRuIdx + 1) );
         return;
